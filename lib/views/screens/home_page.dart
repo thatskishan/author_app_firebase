@@ -105,6 +105,88 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                           ),
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              OutlinedButton(
+                                onPressed: () {
+                                  Map<String, dynamic> records = {
+                                    'author': allDocs[i].data()['author'],
+                                    'book': allDocs[i].data()['book'],
+                                    'image': allDocs[i].data()['image'],
+                                  };
+                                  updateAndInsert(
+                                      id: allDocs[i].id, data: records);
+                                },
+                                child: Text(
+                                  "Edit",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              OutlinedButton(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(
+                                        'Are you sure to delete this note?',
+                                        style: GoogleFonts.poppins(),
+                                      ),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          child: Text(
+                                            'Yes',
+                                            style: GoogleFonts.poppins(),
+                                          ),
+                                          onPressed: () async {
+                                            await FirestoreHelper
+                                                .firestoreHelper
+                                                .deleteRecord(
+                                                    id: allDocs[i].id);
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                    "Record Deleted Successfully..."),
+                                                backgroundColor:
+                                                    Colors.redAccent,
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                              ),
+                                            );
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: Text(
+                                            'No',
+                                            style: GoogleFonts.poppins(),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  "Delete",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -141,6 +223,7 @@ class _HomePageState extends State<HomePage> {
     );
 
     image = await xFile!.readAsBytes();
+    setState(() {});
   }
 
   validateAndInsert() {
@@ -151,68 +234,82 @@ class _HomePageState extends State<HomePage> {
           "Add record",
           style: GoogleFonts.poppins(),
         ),
-        content: Form(
-          key: insertKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  getImage();
-                },
-                child: const CircleAvatar(
-                  radius: 60,
-                  backgroundColor: const Color(0xff23334c),
-                  child: Icon(
-                    Icons.add,
-                    color: Colors.white,
+        content: StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Form(
+              key: insertKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () async {
+                      ImagePicker picker = ImagePicker();
+
+                      XFile? xFile = await picker.pickImage(
+                        source: ImageSource.gallery,
+                        imageQuality: 50,
+                      );
+
+                      image = await xFile!.readAsBytes();
+                      setState(() {});
+                    },
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundColor: const Color(0xff23334c),
+                      foregroundImage:
+                          (image != null) ? MemoryImage(image!) : null,
+                      child: Icon(
+                        Icons.add,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  TextFormField(
+                    controller: authorController,
+                    validator: (val) {
+                      if (val!.isEmpty) {
+                        return "Enter Author Name First";
+                      }
+                      return null;
+                    },
+                    onSaved: (val) {
+                      author = val;
+                    },
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "Enter Author Name First",
+                      labelText: "Author",
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  TextFormField(
+                    controller: bookController,
+                    validator: (val) {
+                      if (val!.isEmpty) {
+                        return "Enter Book Name First";
+                      }
+                      return null;
+                    },
+                    onSaved: (val) {
+                      book = val;
+                    },
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "Enter Book Name Here",
+                      labelText: "Book",
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(
-                height: 10,
-              ),
-              TextFormField(
-                controller: authorController,
-                validator: (val) {
-                  if (val!.isEmpty) {
-                    return "Enter Author Name First";
-                  }
-                  return null;
-                },
-                onSaved: (val) {
-                  author = val;
-                },
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: "Enter Author Name First",
-                  labelText: "Author",
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              TextFormField(
-                controller: bookController,
-                validator: (val) {
-                  if (val!.isEmpty) {
-                    return "Enter Book Name First";
-                  }
-                  return null;
-                },
-                onSaved: (val) {
-                  book = val;
-                },
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: "Enter Book Name Here",
-                  labelText: "Book",
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
         actions: [
           OutlinedButton(
@@ -283,7 +380,7 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          "Add record",
+          "Update record",
           style: GoogleFonts.poppins(),
         ),
         content: Form(
@@ -292,8 +389,16 @@ class _HomePageState extends State<HomePage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               GestureDetector(
-                onTap: () {
-                  getImage();
+                onTap: () async {
+                  ImagePicker picker = ImagePicker();
+
+                  XFile? xFile = await picker.pickImage(
+                    source: ImageSource.gallery,
+                    imageQuality: 50,
+                  );
+
+                  image = await xFile!.readAsBytes();
+                  setState(() {});
                 },
                 child: CircleAvatar(
                   radius: 60,
